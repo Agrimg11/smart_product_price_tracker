@@ -1,65 +1,146 @@
+import AddProductForm from "@/components/AddProductForm";
+import { Button } from "@/components/ui/button";
+import { Bell, LogIn, Rabbit, Shield, TrendingDown } from "lucide-react";
 import Image from "next/image";
+import  AuthButton  from "@/components/AuthButton";
+import { createClient } from "@/utils/supabase/server";
+import { getProducts } from "./actions";
+import ProductCard from "@/components/ProductCard";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+export default async function Home() {
+
+    const supabase= await createClient();
+
+    const {  data: { user } } = await supabase.auth.getUser();
+
+    // 1. Fetch the raw response object
+    const productsResponse = user ? await getProducts() : null;
+    
+    // 2. Extract the actual array (fallback to an empty array if anything goes wrong)
+    const products = productsResponse?.products || [];
+
+    const FEATURES = [
+    {
+      icon: Rabbit,
+      title: "Lightning Fast",
+      description:
+        "Deal Drop extracts prices in seconds, handling JavaScript and dynamic content",
+    },
+    {
+      icon: Shield,
+      title: "Always Reliable",
+      description:
+        "Works across all major e-commerce sites with built-in anti-bot protection",
+    },
+    {
+      icon: Bell,
+      title: "Smart Alerts",
+      description: "Get notified instantly when prices drop below your target",
+    },
+  ];
+    
+
+    return (
+    <main className="min-h-screen  bg-linear-to-br from-orange-100 via-white to-orange-50" >
+      <header className="bg-white/80  backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          
+          <div className="flex items-center gap-3">
+            <Image src={"/deal-drop-logo.png"} alt="Dealdrop Logo" width={600} height={200} className="h-10 w-auto"/>
+          </div>
+
+          {/* auth button */}
+
+          <AuthButton user={user}/>
+
+        </div>
+      </header> 
+      
+      <section className="py-20 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="text-4xl font-bold mb-4">Track Prices, Save Big</h1>
+          <p className="text-lg text-gray-700 mb-8">
+            Deal Drop is your ultimate price tracking companion. Get instant alerts when prices drop on your favorite products across the web.
           </p>
+         
+
+          {/* add product form */}
+          <AddProductForm user={user} />
+
+
+          {/* features */}
+          {products.length === 0 && (
+            <div className="mt-8">
+
+              <h2 className="text-2xl font-semibold mb-6">Why Choose Deal Drop?</h2>
+
+              <div className="grid md:grid-cols-3 gap-8 mx-auto mt-10">
+                {FEATURES.map(({icon :Icon ,title ,description}) => (
+
+                  <div key={title} className="bg-white/80 backdrop-blur-sm rounded-lg p-6 text-center border border-gray-200">
+
+                    <div className="mx-auto mb-4 w-12 h-12 flex items-center justify-center rounded-lg bg-orange-100">
+                      <Icon className="w-7 h-8  text-orange-400"/>
+                    </div>
+
+                    <h3 className="text-lg font-medium mb-2">{title}</h3>
+                    <p className="text-gray-600">{description}</p>
+
+                  </div>
+                ))}
+              </div>
+            </div> 
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+      </section>
+
+      {/* product list */}
+      {user && products.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 pb-20">
+          
+         <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold mb-6">Your Tracked Products</h3>
+         <span className="text-sm text-gray-500 mb-4 ">
+          {products.length} {products.length === 1 ? "product" : "products"}
+         </span>
+         </div>
+         
+         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+          {products.map((product )=> 
+            <ProductCard key={product.id} product={product} />
+          )}
+          </div>
+
+
+        </section>
+      )}
+
+
+      {/* Empty State */}
+      {user && products.length === 0 && (
+        <section className="max-w-2xl mx-auto px-4 pb-20 text-center">
+          <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12">
+            <TrendingDown className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No products yet
+            </h3>
+            <p className="text-gray-600">
+              Add your first product above to start tracking prices!
+            </p>
+          </div>
+        </section>
+      )}
+
+
+
+
+
+
+
+
+    </main>
+
+
+    );
+  
 }
